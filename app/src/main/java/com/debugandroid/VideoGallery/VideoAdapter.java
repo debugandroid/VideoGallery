@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +15,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.NativeExpressAdView;
+
 import java.util.List;
 
 /**
@@ -23,17 +26,17 @@ import java.util.List;
  */
 public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private  List<VideoItem> videoList;
-    Context context;
     private final static int FADE_DURATION = 1000;
-    public static Glide glid;
-    private  String album_name;
-    String name;
-    int days;
-    Bundle bundle=new Bundle();
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_ITEM = 1;
     private static final int TYPE_FOOTER = 2;
+    public static Glide glid;
+    Context context;
+    String name;
+    int days;
+    Bundle bundle=new Bundle();
+    private List<VideoItem> videoList;
+    private String album_name;
     private boolean mWithHeader;
     private boolean mWithFooter;
 
@@ -99,7 +102,7 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             ((VideoViewHolder) holder).b = bundle;
             ((VideoViewHolder) holder).position = position;
 
-            glid.with(context)
+            Glide.with(context)
                     .load(mediaObject.getDATA())
                     .centerCrop()
                     .placeholder(R.color.cardview_dark_background)
@@ -164,10 +167,6 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected int position;
 
 
-        public void clearAnimation()
-        {
-            this.clearAnimation();
-        }
         public VideoViewHolder(View v) {
             super(v);
             vName =  (TextView) v.findViewById(R.id.media_name);
@@ -185,6 +184,10 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
             });
         }
 
+        public void clearAnimation() {
+            this.clearAnimation();
+        }
+
 
     }
 
@@ -194,10 +197,43 @@ public class VideoAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
         protected  Context context;
         protected   Bundle b;
         protected int position;
+        //  protected AdView adView;
 
         public headView(View v) {
             super(v);
             vName =  (TextView) v.findViewById(R.id.gallery_title);
+            final NativeExpressAdView adView = (NativeExpressAdView) v.findViewById(R.id.adView);
+            adView.loadAd(new AdRequest.Builder().build());
+            adView.setAdListener(new AdListener() {
+                @Override
+                public void onAdLoaded() {
+                    super.onAdLoaded();
+                    adView.setVisibility(View.VISIBLE);
+                }
+
+                @Override
+                public void onAdOpened() {
+                    super.onAdOpened();
+
+                }
+
+                @Override
+                public void onAdLeftApplication() {
+                    super.onAdLeftApplication();
+                }
+
+                @Override
+                public void onAdFailedToLoad(int i) {
+                    super.onAdFailedToLoad(i);
+                    adView.setVisibility(View.GONE);
+                }
+
+                @Override
+                public void onAdClosed() {
+                    super.onAdClosed();
+                    adView.setVisibility(View.GONE);
+                }
+            });
         }
     }
 

@@ -7,9 +7,10 @@
     tools:context="com.debugandroid.VideoGallery.MainActivity">
 
     <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/recyclerView">
+        android:layout_below="@+id/adView">
 
     </android.support.v7.widget.RecyclerView>
 </RelativeLayout>

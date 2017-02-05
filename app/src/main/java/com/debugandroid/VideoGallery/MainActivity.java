@@ -2,15 +2,26 @@ package com.debugandroid.VideoGallery;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.widget.Toast;
+import android.support.design.widget.BottomNavigationView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,49 +34,52 @@ public class MainActivity extends AppCompatActivity {
     private  List<VideoItem> videoItemList;
     private RecyclerView recyclerView;
     private VideoAdapter videoAdapter;
+    ActionBar actionBar;
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.Wifi:
+                    actionBar.setTitle("Wifi Demo");
+                    setWifiFragment();
+                    return true;
+                case R.id.Gallery:
+                    actionBar.setTitle("Gallery");
+                    setGalleryFragment();
+                    return true;
+                default:
+                    setGalleryFragment();
+            }
+            return false;
+        }
 
+    };
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            checkandAskPermission();
-        } else {
-            initVideo();
-        }
+        actionBar=getSupportActionBar();
+        BottomNavigationView bottom_navigation = (BottomNavigationView) findViewById(R.id.bottom_navigation);
+        bottom_navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
+      //  checkandAskPermission();
+        setGalleryFragment();
 
     }
+    public void setWifiFragment(){
+        FragmentManager fm= getSupportFragmentManager();
+        FragmentTransaction ft=fm.beginTransaction();
+        Fragment wifiFragment=WifiFragment.newInstance();
+        ft.replace(R.id.main_container,wifiFragment);
+        ft.commit();
+    }
 
-    private void initVideo() {
-        recyclerView= (RecyclerView) findViewById(R.id.recyclerView);
-        videoItemList=new ArrayList<VideoItem>();
-        mediaQuery=new MediaQuery(this);
-        videoItemList=mediaQuery.getAllVideo();
-        Log.d("VideoList","Count:"+videoItemList.size());
-        videoAdapter=new VideoAdapter(videoItemList,this,"Gallery",true,false);
-        GridLayoutManager glm = new GridLayoutManager(this, 2);
-        glm.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
-            @Override
-            public int getSpanSize(int position) {
-
-                switch (videoAdapter.getItemViewType(position)) {
-                    case 0:
-                        return 2;
-                    case 1:
-                        return 1;
-                    case 2:
-                        return 2;
-                    default:
-                        return 1;
-                }
-
-            }
-        });
-        recyclerView.setLayoutManager(glm);
-        recyclerView.setAdapter(videoAdapter);
-
+    public void setGalleryFragment(){
+        FragmentManager fm= getSupportFragmentManager();
+        FragmentTransaction ft=fm.beginTransaction();
+        Fragment galleryFragment=GalleryFragment.newInstance();
+        ft.replace(R.id.main_container,galleryFragment);
+        ft.commit();
     }
 
     private void setVideoAdapter() {
@@ -81,7 +95,10 @@ public class MainActivity extends AppCompatActivity {
         final List<String> permissionsList = new ArrayList<String>();
         if (!addPermission(permissionsList, Manifest.permission.READ_EXTERNAL_STORAGE))
             permissionsNeeded.add("Storage");
-
+        if (!addPermission(permissionsList, Manifest.permission.CHANGE_WIFI_STATE))
+            permissionsNeeded.add("Network");
+        if (!addPermission(permissionsList, Manifest.permission.ACCESS_FINE_LOCATION))
+            permissionsNeeded.add("GPS");
 
         if (permissionsList.size() > 0) {
             if (permissionsNeeded.size() > 0) {
@@ -104,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS);
             return;
         }
-        initVideo();
+        //initVideo();
     }
 
     private void showMessageOKCancel(String message, DialogInterface.OnClickListener okListener) {
@@ -133,10 +150,14 @@ public class MainActivity extends AppCompatActivity {
             case REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS: {
                 Map<String, Integer> perms = new HashMap<String, Integer>();
                 perms.put(Manifest.permission.READ_EXTERNAL_STORAGE, PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.CHANGE_NETWORK_STATE,PackageManager.PERMISSION_GRANTED);
+                perms.put(Manifest.permission.ACCESS_FINE_LOCATION,PackageManager.PERMISSION_GRANTED);
                 for (int i = 0; i < permissions.length; i++)
                     perms.put(permissions[i], grantResults[i]);
-                if (perms.get(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                    initVideo();
+                if (perms.get(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                        perms.get(Manifest.permission.CHANGE_NETWORK_STATE)==PackageManager.PERMISSION_GRANTED &&
+                        perms.get(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED) {
+
                 } else {
                     // Permission Denied
                     Toast.makeText(MainActivity.this, "Some Permission is Denied", Toast.LENGTH_SHORT)
@@ -144,5 +165,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.default_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        switch (item.getItemId()) {
+            case R.id.debug_android:
+                Intent mysiteIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.debugandroid.com"));
+                startActivity(mysiteIntent);
+                return true;
+        }
+        return true;
     }
 }
